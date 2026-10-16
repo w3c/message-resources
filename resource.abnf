@@ -35,6 +35,7 @@ metadata = "@" id-part [ws value]
 ; Comments within the resource-head always attach to the resource as a whole.
 ; In the resource body, comments attach to a subsequent section-head or entry,
 ; if not separated from it by any empty lines.
+; Comments followed by an empty line MAY be discarded during processing.
 ; Metadata lines are valid between comments and their target.
 comment = "#" *(content / backslash)
 empty-line = [ws]
