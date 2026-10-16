@@ -1,9 +1,9 @@
 ; A resource consists of any number of
 ; section headers, entries, comments and empty lines.
 ; These are all separated from each other by LF or CRLF line endings.
-; Except for empty lines, all lines start with a non-whitespace character.
-resource = line *(newline line)
-line = frontmatter / section-head / entry / metadata / comment / empty-line
+; Except for empty lines, all items start with a non-whitespace character.
+resource = item *(newline item)
+item = frontmatter / section-head / entry / metadata / comment / empty-line
 
 ; Comments and metadata before the frontmatter attach to the entire resource.
 ; A valid resource must have at most one frontmatter,
