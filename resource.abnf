@@ -46,8 +46,8 @@ newline = CRLF / LF
 ; An identifier is made up of one or more non-empty parts separated by dots.
 ; Common symbols and non-printable characters must be \escaped in identifiers.
 id = id-part *([ws] "." [ws] id-part)
-id-part = 1*(id-safe / id-escape)
-id-safe = ALPHA / DIGIT / "_" / "-"
+id-part = 1*(id-char / id-escape)
+id-char = ALPHA / DIGIT / "_" / "-"
         / %x00A1-1FFF / %x200C-200D / %x2030-205E / %x2070-2FEF
         / %x3001-D7FF / %xF900-FDCF / %xFDF0-FFFD / %x10000-EFFFF
 id-escape = backslash (escaped / symbols)
