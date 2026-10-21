@@ -31,7 +31,7 @@
 <body>
   <section id="abstract">
     <p>This specification defines a standard container for localizable content,
-       especially <a>messages</a> that support <a>Unicode MessageFormat</a> [[CLDR]].</p>
+      especially <a>messages</a> that support <a>Unicode MessageFormat</a> [[CLDR]].</p>
   </section>
 
   <section id="sotd"></section>
@@ -39,52 +39,50 @@
   <section>
     <h2>Introduction</h2>
     <p>This specification defines a container for <a>messages</a>,
-    including a data model, file-based serialization, and basic processing.</p>
+      including a data model, file-based serialization, and basic processing.</p>
 
     <p>Message resources allow application and document format authors to separate strings and other content
-    that might need <a>localization</a> from the logic and presentational structure of Web content.
-    This includes (but is not limited to) HTML pages, scripts, manifests, or other documents.
-    This allows for the creation, translation, or adaptation to new languages or <a>locales</a> without affecting
-    the core functionality and fascilitates management of presentation to audiences that vary by language or culture.</p>
+      that might need <a>localization</a> from the logic and presentational structure of Web content.
+      This includes (but is not limited to) HTML pages, scripts, manifests, or other documents.
+      This allows for the creation, translation, or adaptation to new languages or <a>locales</a> without affecting
+      the core functionality and fascilitates management of presentation to audiences that vary by language or culture.</p>
   </section>
 
   <section id="conformance"></section>
 
   <section id="conventions">
-	  <h3>Document Conventions</h3>
-        <p>In this document [[RFC2119]] keywords in uppercase italics have their usual meaning. We also use these stylistic conventions:</p>
+    <h3>Document Conventions</h3>
+    <p>In this document [[RFC2119]] keywords in uppercase italics have their usual meaning. We also use these stylistic conventions:</p>
 
-        <p class="definition-example"><strong>Definitions</strong> appear with a different background color and decoration like this.</p>
-        <p class="advisement"><strong>Best practices</strong> appear with a different background color and decoration like this.</p>
-        <p class="issue-example" id="issue-example"><strong>Issues</strong>, gaps, and recommendations for future work appear with a different background color and decoration like this.</p>
-
+    <p class="definition-example"><strong>Definitions</strong> appear with a different background color and decoration like this.</p>
+    <p class="advisement"><strong>Best practices</strong> appear with a different background color and decoration like this.</p>
+    <p class="issue-example" id="issue-example"><strong>Issues</strong>, gaps, and recommendations for future work appear with a different background color and decoration like this.</p>
   </section>
 
-      <section id="terminology">
-        <h3>Terminology</h3>
-        <p>This section contains terminology specific to this document.</p>
+  <section id="terminology">
+    <h3>Terminology</h3>
+    <p>This section contains terminology specific to this document.</p>
 
-        <p>Much of the terminology needed to understand this document is provided by the <cite>Internationalization Glossary</cite> [[I18N-GLOSSARY]]</p>
+    <p>Much of the terminology needed to understand this document is provided by the <cite>Internationalization Glossary</cite> [[I18N-GLOSSARY]]</p>
 
-        <p class="definition"><dfn>Message</dfn>. In this document's context, a "message" refers to a specific <a>message format</a> pattern string,
-        including additional data or metadata relating to the message's handling or localization.</p>
+    <p class="definition"><dfn>Message</dfn>. In this document's context, a "message" refers to a specific <a>message format</a> pattern string,
+      including additional data or metadata relating to the message's handling or localization.</p>
 
-        <aside class="note">
-			<p>A <a>message format</a> pattern string can be a plain string that requires no formatting at all,
-			including the empty string.</p>
-        </aside>
+    <aside class="note">
+      <p>A <a>message format</a> pattern string can be a plain string that requires no formatting at all,
+        including the empty string.</p>
+    </aside>
 
-        <p class="definition"><dfn data-lt="Unicode MessageFormat|MF2|MessageFormat|message format">Unicode MessageFormat</dfn> ("MF2") is
-        a Unicode Consortium standard defined as part of [[UTS35]] that defines the data model, syntax, processing, and conformance requirements
-        for the next generation of dynamic messages.</p>
-      </section>
+    <p class="definition"><dfn data-lt="Unicode MessageFormat|MF2|MessageFormat|message format">Unicode MessageFormat</dfn> ("MF2") is
+      a Unicode Consortium standard defined as part of [[UTS35]] that defines the data model, syntax, processing, and conformance requirements
+      for the next generation of dynamic messages.</p>
+  </section>
 
-      <section id="ABNF">
-		  <h3>Syntax</h3>
+  <section id="ABNF">
+    <h3>Syntax</h3>
+    <p>The syntax of a message resource is described by the following [[ABNF]]:</p>
 
-		  <p>The syntax of a message resource is described by the following [[ABNF]]:</p>
-
-		  <pre class="abnf" data-include="resource.abnf" data-include-format="text"></pre>
-      </section>
+    <pre class="abnf" data-include="resource.abnf" data-include-format="text"></pre>
+  </section>
 </body>
 </html>
