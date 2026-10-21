@@ -4,17 +4,23 @@
 
 .unicode:link {
 	color: #FF0000;
+	color: light-dark(#FF0000, #FF8A8A);
 	background-color: #FFFFFF;
+	background-color: light-dark(#FFFFFF, transparent);
 }
 
 .unicode:visited {
 	color: #808080;
+	color: light-dark(#808080, #B8B8B8);
 	background-color: #FFFFFF;
+	background-color: light-dark(#FFFFFF, transparent);
 }
 
 .unicode:active {
 	color: #0000FF;
+	color: light-dark(#0000FF, #8AB4FF);
 	background-color: #FFFFFF;
+	background-color: light-dark(#FFFFFF, transparent);
 }
 
 em.unicode {
@@ -23,6 +29,7 @@ em.unicode {
 
 ins {
 	background-color: #FF6;
+	background-color: light-dark(#FF6, #3A3A00);
 }
 
 p.cjk-demo {
@@ -54,19 +61,22 @@ p.cjk-demo {
 
 .reqex {
     background-color: #FFC;
+    background-color: light-dark(#FFC, #333000);
     font-style: italic;
 }
 
 .reqex::before {
     content: "\1f44d \00A0 Req. #: ";
     font-style: normal;
-    color: #63F;;
+    color: #63F;
+    color: light-dark(#63F, #B7A6FF);
 }
 
 kbd {
    font-family: Menlo, Consolas, "DejaVu Sans Mono", Monaco, monospace;
    font-size: .95em;
    color: blue;
+   color: light-dark(blue, #8AB4FF);
    break-inside: avoid;
    hyphens: none;
    text-transform: none;
@@ -78,6 +88,7 @@ kbd {
 .summary {
     padding: 1em;
     background-color: antiquewhite;
+    background-color: light-dark(antiquewhite, #2A2418);
 }
 
 a.self {
@@ -113,10 +124,15 @@ a.self:hover {
 .definition {
     position: relative;
     background-color: #efefef;
+    background-color: light-dark(#efefef, #1F1F1F);
+    color: #000;
+    color: light-dark(#000, #DDD);
     padding: 0.5em;
     border: 0.5em;
     border-left: 6pt solid green;
+    border-left-color: light-dark(green, #4CAF50);
     border-right: 6pt solid green;
+    border-right-color: light-dark(green, #4CAF50);
     margin: 1em auto;
 }
 
@@ -126,10 +142,15 @@ a.self:hover {
      */
     position: relative;
     background-color: #efefef;
+    background-color: light-dark(#efefef, #1F1F1F);
+    color: #000;
+    color: light-dark(#000, #DDD);
     padding: 0.5em;
     border: 0.5em;
     border-left: 6pt solid green;
+    border-left-color: light-dark(green, #4CAF50);
     border-right: 6pt solid green;
+    border-right-color: light-dark(green, #4CAF50);
     margin: 1em auto;
 }
 
@@ -139,7 +160,10 @@ a.self:hover {
      * the counter
      */
     position: relative;
-    background: #FBE9E9;
+    background-color: #FBE9E9;
+    background-color: light-dark(#FBE9E9, #2A1215);
+    color: #000;
+    color: light-dark(#000, #DDD);
     padding: 0.5em;
     border: 0.5em;
     border-left: 6pt solid #E05252;
