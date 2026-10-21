@@ -33,14 +33,10 @@ ins {
 }
 
 p.cjk-demo {
-	font-size: 200%; 
+	font-size: 200%;
 	text-align: center;
 	font-family: serif;
 }
-
-
-
-
 
 .advisement + .links { margin-top: -1em; }
 .advisement + .links a { text-decoration: none; border-bottom: none; }
@@ -55,9 +51,6 @@ p.cjk-demo {
 	font-size: 80%;
 	color: #999;
 	}
-
-
-
 
 .reqex {
     background-color: #FFC;
@@ -83,7 +76,6 @@ kbd {
    text-align: left;
    text-align: start;
 }
-
 
 .summary {
     padding: 1em;
@@ -111,7 +103,7 @@ a.self:hover {
 }
 
 .self::after {
-	content:  attr(href); 	
+	content: attr(href);
 	font-weight: normal;
 	font-style: italic;
 	font-size: 80%;

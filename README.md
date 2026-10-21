@@ -300,4 +300,3 @@ where `Message` is a [Unicode MessageFormat Message](https://github.com/unicode-
 As with the Unicode MessageFormat data model,
 the message resource JSON Schema relaxes some aspects of the data model,
 allowing comment and metadata values to be optional rather than required properties.
-
