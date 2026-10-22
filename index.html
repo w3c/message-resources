@@ -180,8 +180,8 @@
         To parse the value of one or more comments into a single string,
         the `#` sigil and up to one space or tab is trimmed from the start of each line,
         and any trailing whitespace is similarly trimmed.
-        The lines are concatenated by U+000A LF characters,
-        and any leading and trailing U+000A LF characters are trimmed.
+        The lines are concatenated by <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> characters,
+        excluding any leading or trailing empty lines.
         Escaping is not supported for comment values.</p>
 
       <pre class="abnf">
@@ -235,7 +235,12 @@
     <section id="item">
       <h4>Item</h4>
       <p>Within the main body of the resource,
-        all items are separated from each other by U+000A LF or U+000D U+000A CRLF line endings.
+        all items are separated from each other by <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> or
+        <span class="codepoint">
+          <span style="white-space: nowrap"><bdi lang="zxx">&#x240D;</bdi><bdi lang="zxx">&#x2424;</bdi></span>
+          <code class="uname">U+000D CARRIAGE RETURN</code> + <code class="uname">U+000A END OF LINE</code>
+        </span>
+        line endings.
         Except for empty lines, all items start with a non-whitespace character.</p>
 
       <pre class="abnf">
@@ -361,18 +366,18 @@
       <p>A `value` may extend over multiple lines,
         as long as each line after the first is indented by at least one space or tab or is empty.
         If a `value` line starts or ends with significant whitespace,
-        escape the first or last character of the line with a `\` U+005C Reverse Solidus.
+        escape the first or last character of the line with a <span class="codepoint"><bdi>\</bdi><code class="uname">U+005C REVERSE SOLIDUS</code></span>.
         When a newline occurs in a `value`,
-        it is always considered to represent a single U+000A LF character.
-        To include a U+000D CR character in a value, escape it as `\r`.</p>
+        it is always considered to represent a single <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> character.
+        To include a <span class="codepoint"><bdi lang="zxx">&#x240D;</bdi><code class="uname">U+000D CARRIAGE RETURN</code></span> character in a value, escape it as `\r`.</p>
 
       <p>To parse the `value` as a string,
         any leading and trailing unescaped whitespace is trimmed from each line.
-        The lines are concatenated by U+000A LF characters,
-        and any leading and trailing unescaped U+000A LF characters are trimmed.
+        The lines are concatenated by <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> characters,
+        excluding any leading or trailing empty lines.
         Finally, all character escapes are parsed.
         The parsed values of the `\\`, `\{`, `\|`, and `\}` escape sequences
-        are their string values, including the `\` U+005C Reverse Solidus.</p>
+        are their string values, including the <span class="codepoint"><bdi>\</bdi><code class="uname">U+005C REVERSE SOLIDUS</code></span>.</p>
 
       <pre class="abnf">
         value = value-line *(1*newline ws value-line)
@@ -401,11 +406,14 @@
         This allows for line breaks to be inserted into an `id` or `value` for presentation only,
         and for long keys and values to be wrapped for legibility.</p>
 
-      <p>The parsed value of an escaped space or tab is the character itself.
-        The parsed value of an escaped `\n` is the U+000A LF character.
-        The parsed value of an escaped `\r` is the U+0009 CR character.
-        The parsed value of an escaped `\t` is the tab character</p>
-
+      <p>The parsed value of an escaped <span class="codepoint"><bdi lang="zxx">&#x2409;</bdi><code class="uname">U+0009 CHARACTER TABULATION</code></span>
+        or <span class="codepoint"><bdi lang="zxx">&#x2420;</bdi><code class="uname">U+0020 SPACE</code></span> is the character itself.</p>
+      <p>The parsed value of an escaped `\n` is the
+        <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> character.</p>
+      <p>The parsed value of an escaped `\r` is the
+        <span class="codepoint"><bdi lang="zxx">&#x240D;</bdi><code class="uname">U+000D CARRIAGE RETURN</code></span> character.</p>
+      <p>The parsed value of an escaped `\t` is the
+        <span class="codepoint"><bdi lang="zxx">&#x2409;</bdi><code class="uname">U+0009 CHARACTER TABULATION</code></span> character</p>
       <p>The parsed value of the `\x`, `\u`, and `\U` escapes
         is the Unicode character represented by their hexadecimal values.</p>
 
@@ -421,19 +429,27 @@
       </pre>
 
       <aside class="note">
-        <p>The syntax allows for the same character to be escaped with more than one represntation.
-          For example, each of the these is a valid representation of a horizontal tab:
-          `\	`, `\t`, `\x09`, `\u0009`, `\U000009`.</p>
+        <p>The syntax allows for the same character to be escaped with more than one representation.
+          For example, each of the these is a valid escaped form of
+          <span class="codepoint"><bdi lang="zxx">&#x2409;</bdi><code class="uname">U+0009 CHARACTER TABULATION</code></span>:
+          `\`<span class="codepoint"><bdi lang="zxx">&#x2409;</bdi></span>, `\t`, `\x09`, `\u0009`, `\U000009`.</p>
       </aside>
     </section>
 
     <section id="whitespace">
       <h4>Whitespace</h4>
       <p>The only horizontal whitespace characters that are considered as such
-        are the U+0009 Tab and U+0020 Space characters</p>
+        are the <span class="codepoint"><bdi lang="zxx">&#x2409;</bdi><code class="uname">U+0009 CHARACTER TABULATION</code></span> and
+        <span class="codepoint"><bdi lang="zxx">&#x2420;</bdi><code class="uname">U+0020 SPACE</code></span> characters</p>
 
-      <p>Both U+000A LF and U+000D U+000A CRLF are accepted as line endings,
-        but all parsed values will normalize their representation as only U+000A LF characters.
+      <p>Both <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> and
+        <span class="codepoint">
+          <span style="white-space: nowrap"><bdi lang="zxx">&#x240D;</bdi><bdi lang="zxx">&#x2424;</bdi></span>
+          <code class="uname">U+000D CARRIAGE RETURN</code> + <code class="uname">U+000A END OF LINE</code>
+        </span>
+        are accepted as line endings,
+        but all parsed values will normalize their representation as only
+        <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> characters.
         To include other vertical whitespace characters in a `value`,
         they must be escaped.</p>
 
