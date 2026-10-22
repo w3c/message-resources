@@ -38,6 +38,16 @@ p.cjk-demo {
 	font-family: serif;
 }
 
+.codepoint bdi[lang=zxx] {
+  border: 1px dashed;
+  display: inline-block;
+  font-size: 1.5em;
+  line-height: 0.75em;
+  margin: -0.1em 0.05em;
+  padding: 0.1em 0.2em 0 0.2em;
+  vertical-align: text-bottom;
+}
+
 .advisement + .links { margin-top: -1em; }
 .advisement + .links a { text-decoration: none; border-bottom: none; }
 .advisement { }

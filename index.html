@@ -14,6 +14,29 @@
     async></script>
 
   <script class="remove">
+    async function loadTypescript() {
+      const worker = await document.respec.worker;
+      const action = "highlight-load-lang";
+      const propName = "defineTypeScript";
+      const lang = "typescript";
+      let langScript;
+      try {
+        const response = await fetch("./typescript.min.js");
+        if (response.ok) langScript = await response.text();
+      } catch {
+        return
+      }
+      worker.postMessage({ action, langScript, propName, lang });
+      return new Promise(resolve => {
+        worker.addEventListener("message", function listener({ data }) {
+          if (data.action === action && data.lang === lang) {
+            worker.removeEventListener("message", listener);
+            resolve();
+          }
+        });
+      });
+    }
+
     var respecConfig = {
       specStatus: "ED",
       editors: [
@@ -24,7 +47,27 @@
       github: "w3c/message-resources",
       group: "i18n",
       canonicalURI: "TR",
-      license: "w3c-software-doc"
+      license: "w3c-software-doc",
+      preProcess: [loadTypescript],
+      localBiblio: {
+        Fluent: {
+          title: "Fluent Syntax (FTL)",
+          href: "https://github.com/projectfluent/fluent/tree/main/spec",
+          publisher: "Mozilla"
+        },
+        JavaDoc:{
+          title: "JavaDoc - Format of a Doc Comment",
+          href: "https://www.oracle.com/technical-resources/articles/java/javadoc-tool.html#format"
+        },
+        JSDoc: {
+          title: "JSDoc",
+          href: "https://jsdoc.app/"
+        },
+        TOML: {
+          title: "Tom's Obvious, Minimal Language",
+          href: "https://toml.io/en/v1.1.0",
+        },
+      }
     };
   </script>
 </head>
@@ -78,11 +121,387 @@
       for the next generation of dynamic messages.</p>
   </section>
 
-  <section id="ABNF">
-    <h3>Syntax</h3>
-    <p>The syntax of a message resource is described by the following [[ABNF]]:</p>
+  <section id="structure">
+    <h3>Message Resource Structure</h3>
+    <p>The syntax of a message resource document is defined by this section using [[ABNF]],
+      along with a non-normative corresponding TypeScript data model.</p>
 
-    <pre class="abnf" data-include="resource.abnf" data-include-format="text"></pre>
+    <aside class="note">
+      <p>The design of the message resource syntax is inspired by multiple other pre-existing syntaxes,
+        and is intended to be understandable without prior experience.</p>
+
+      <p>The overall structure is quite similar to [[?TOML]] and other INI-like file formats,
+        combined with a resource-head that's close to the "frontmatter" used by many markdown processors.
+        The syntax for contextual comments and metadata, including the use of the `@` prefix sigil,
+        is drawn from the conventions used by [[JavaDoc]] and [[JSDoc]] comments on functions.</p>
+    </aside>
+
+    <section id="resource">
+      <h4>Resource</h4>
+      <p>A message resource consists of a resource-head followed by any number of
+        section headers, entries, comments and empty lines.</p>
+
+      <p>A message resource MUST contain a resource-head,
+        but it MAY be otherwise empty.</p>
+
+      <pre class="abnf">
+        resource = resource-head *(newline item)
+      </pre>
+
+      <section id="resource-datamodel" class="informative">
+        <h5>Resource Data Model</h5>
+        <p>A `Resource` is the root of the data model representation of a message resource.
+          Its `Resource.comment` and `Resource.meta` values are set by [[[#resource-head|`resource-head`]]] contents,
+          while `Resource.sections` represents the remaining contents of the message resource.</p>
+
+        <pre class="typescript">
+          interface Resource {
+            comment: string;
+            meta: Metadata[];
+            sections: Section[];
+          }
+        </pre>
+
+        <p class="advisement">
+          The data model is not a concrete syntax tree,
+          and so does not encode whitespace or empty lines.
+          Users are encouraged to consider them not significant,
+          and to always normalize the syntax representation of a message resource
+          when manipulating it programmatically.
+        </p>
+      </section>
+    </section>
+
+    <section id="resource-head">
+      <h4>Resource-Head</h4>
+      <p>Comments and metadata before the `---` separator relate to the entire resource.</p>
+
+      <p>The resource-head cannot be empty,
+        as at least the `@locale` metadata is REQUIRED.</p>
+
+      <p>A resource MUST NOT have any section-head or entry items before the `---` separator.</p>
+
+      <pre class="abnf">
+        resource-head = *((comment / empty-line) newline)
+                        1*(metadata newline)
+                        "---" [ws]
+      </pre>
+    </section>
+
+    <section id="comment">
+      <h4>Comment</h4>
+      <p>Comments within the resource-head always attach to the resource as a whole.
+        In the resource body, comments attach to a subsequent section-head or entry,
+        if not separated from it by any empty lines.
+        Metadata lines are valid between comments and their target.</p>
+
+      <p>Comments that attach to the resource, a section-head, or an entry
+        are considered to be relevant context for translation.
+        Comments outside the resource-head that are followed by one or more empty lines
+        are standalone comments, and MUST NOT be considered relevant for translation.</p>
+
+      <p>Adjacent comment lines should be considered as a single multi-line comment.
+        To parse the value of one or more comments into a single string,
+        the `#` sigil and up to one space or tab is trimmed from the start of each line,
+        and any trailing whitespace is similarly trimmed.
+        The lines are concatenated by <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> characters,
+        excluding any leading or trailing empty lines.
+        Escaping is not supported for comment values.</p>
+
+      <pre class="abnf">
+        comment = "#" *(content / backslash)
+      </pre>
+
+      <section id="comment-datamodel" class="informative">
+        <h5>Comment Data Model</h5>
+        <p>In the data model, attached comments are presented as
+          `Resource.comment`, `Section.comment`, and `Entry.comment` string values.
+          Standalone comments are presented as `Comment` values.
+          An empty or whitespace-only comment will be represented by an empty string.</p>
+
+        <pre class="typescript">
+          interface Comment {
+            type: "comment";
+            comment: string;
+          }
+        </pre>
+      </section>
+    </section>
+
+    <section id="metadata">
+      <h4>Metadata</h4>
+      <p>Metadata attaches properties to the resource-head, section-head or entry.
+        Other metadata lines are valid between metadata and its target,
+        but comments and empty lines are not.</p>
+
+      <p>The `value` of `metadata` is optional.
+        If it is not present, its parsed value is considered to be an empty string.</p>
+
+      <pre class="abnf">
+        metadata = "@" id-part [ws value]
+      </pre>
+
+      <section id="metadata-datamodel" class="informative">
+        <h5>Metadata Data Model</h5>
+        <p>The data model representation of metadata is as an array of `Metadata` values.
+          This allows for their relative order to be retained,
+          and for the same `Metadata.key` value to be repeated.</p>
+
+        <pre class="typescript">
+          interface Metadata {
+            key: string;
+            value: string;
+          }
+        </pre>
+      </section>
+    </section>
+
+    <section id="item">
+      <h4>Item</h4>
+      <p>Within the main body of the resource,
+        all items are separated from each other by <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> or
+        <span class="codepoint">
+          <span style="white-space: nowrap"><bdi lang="zxx">&#x240D;</bdi><bdi lang="zxx">&#x2424;</bdi></span>
+          <code class="uname">U+000D CARRIAGE RETURN</code> + <code class="uname">U+000A END OF LINE</code>
+        </span>
+        line endings.
+        Except for empty lines, all items start with a non-whitespace character.</p>
+
+      <pre class="abnf">
+        item = section-head / entry / comment / empty-line
+      </pre>
+    </section>
+
+    <section id="section-head">
+      <h4>Section-Head</h4>
+      <p>As in [[?TOML]], entries after a section-head belong to that section.
+        Sections do not nest under preceding sections,
+        and instead always define their full identifier.
+        Section-heads may be preceded by metadata,
+        which MUST NOT be separated by empty lines.</p>
+
+      <p>The normalized identifier of a section-head is a non-empty list of non-empty strings
+        parsed from its `id` value.
+        Each section-head MUST have a distinct normalized identifier
+        among all section-heads and entries.</p>
+
+      <pre class="abnf">
+        section-head = *(metadata newline)
+                       "[" [ws] id [ws] "]" [ws]
+      </pre>
+
+      <section id="section-datamodel" class="informative">
+        <h5>Section Data Model</h5>
+        <p>The `section-head` and the [[[#entry|`entry`]]] and standalone [[[#comment|`comment`]]] values
+          that follow before the next `section-head`
+          are collected into the `Section` data model.</p>
+
+        <p>The normalized `section-head` identifier is stored as the `Section.id` array of strings.
+          The top-level or anonymous section has an empty `Section.id` array.</p>
+
+        <p>The `Section.comment` value is set from `comment` lines that immediately precede the `section-head`.</p>
+
+        <pre class="typescript">
+          interface Section {
+            comment: string;
+            meta: Metadata[];
+            id: string[];
+            entries: (Entry | Comment)[];
+          }
+        </pre>
+
+        <aside class="note">
+          <p>The message resource syntax requires the `id` array to be non-empty
+            for all sections after the first one,
+            but empty identifier arrays are also otherwise possible
+            when this data model is used to represent other message resource formats,
+            such as [[Fluent]] FTL files.</p>
+        </aside>
+      </section>
+    </section>
+
+    <section id="entry">
+      <h4>Entry</h4>
+      <p>Entries may be preceded by metadata,
+        which MUST NOT be separated by empty lines.</p>
+
+      <p>The normalized identifier of an entry is a non-empty list of non-empty strings
+        parsed from its `id` value,
+        appended to the normalized identifier of its preceding section-head (if any).
+        Each entry MUST have a distinct normalized identifier
+        among all section-heads and entries.</p>
+
+      <p>To parse the `value` of an `entry`,
+        its parsed string value is further parsed as a Unicode MessageFormat message.</p>
+
+      <pre class="abnf">
+        entry = *(metadata newline)
+                id [ws] "=" [ws] value
+      </pre>
+
+      <section id="entry-datamodel" class="informative">
+        <h5>Entry Data Model</h5>
+        <p>In the data model, the `Entry.id` value is a non-empty list of non-empty strings
+          parsed from the `id` of the `entry`, but not including its section identifier.
+          To determine the normalized identifier of an `Entry`,
+          append `Entry.id` to its parent's `Section.id`.</p>
+
+        <p>The `Entry.comment` value is set from `comment` lines that immediately precede the `entry`.</p>
+
+        <pre class="typescript">
+          interface Entry {
+            type: "entry";
+            comment: string;
+            meta: Metadata[];
+            id: string[];
+            value: Message;
+          }
+        </pre>
+      </section>
+    </section>
+
+    <section id="identifier">
+      <h4>Identifier</h4>
+      <p>An identifier is made up of one or more non-empty parts separated by `.` Full Stop characters.
+        Common symbols and non-printable characters must be escaped.</p>
+
+      <p>The parsed value of an `id` is a non-empty list of non-empty strings,
+        formed from the parsed values of each `id-part`.
+        The parsed value of an `id-part` is the concatenation of its `id-char` and parsed `escaped` and `symbol` values.
+        The parsed value of an escaped `symbol` is the `symbol` character.</p>
+
+      <pre class="abnf">
+        id = id-part *([ws] "." [ws] id-part)
+        id-part = 1*(id-char / id-escape)
+        id-char = ALPHA / DIGIT / "_" / "-"
+                / %x00A1-1FFF / %x200C-200D / %x2030-205E / %x2070-2FEF
+                / %x3001-D7FF / %xF900-FDCF / %xFDF0-FFFD / %x10000-EFFFF
+        id-escape = backslash (escaped / symbol)
+        symbol = %x21-2F / %x3A-40 / %x5B-60 / %x7B-7E ; ASCII symbols and punctuation
+               / %xA1-BF / %xD7 / %xF7 ; Latin-1 symbols and punctuation
+               / %x2010-2027 / %x2030-205E / %x2190-2BFF ; General symbols and punctuation
+      </pre>
+    </section>
+
+    <section id="value">
+      <h4>Value</h4>
+      <p>The `value` is used in both `entry` and `metadata`.</p>
+
+      <p>A `value` may extend over multiple lines,
+        as long as each line after the first is indented by at least one space or tab or is empty.
+        If a `value` line starts or ends with significant whitespace,
+        escape the first or last character of the line with a <span class="codepoint"><bdi>\</bdi><code class="uname">U+005C REVERSE SOLIDUS</code></span>.
+        When a newline occurs in a `value`,
+        it is always considered to represent a single <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> character.
+        To include a <span class="codepoint"><bdi lang="zxx">&#x240D;</bdi><code class="uname">U+000D CARRIAGE RETURN</code></span> character in a value, escape it as `\r`.</p>
+
+      <p>To parse the `value` as a string,
+        any leading and trailing unescaped whitespace is trimmed from each line.
+        The lines are concatenated by <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> characters,
+        excluding any leading or trailing empty lines.
+        Finally, all character escapes are parsed.
+        The parsed values of the `\\`, `\{`, `\|`, and `\}` escape sequences
+        are their string values, including the <span class="codepoint"><bdi>\</bdi><code class="uname">U+005C REVERSE SOLIDUS</code></span>.</p>
+
+      <pre class="abnf">
+        value = value-line *(1*newline ws value-line)
+        value-line = [(value-start / value-escape) *(content / value-escape)]
+        value-start = %x21-5B ; omit C0 controls, SP, and \
+                    / %x5D-7E ; omit C1 controls
+                    / %x00A0-2027 ; omit LSEP & PSEP
+                    / %x202A-D7FF ; omit surrogates
+                    / %xE000-10FFFF
+        content = SP / HTAB / value-start
+        value-escape = backslash (escaped / "{" / "|" / "}")
+      </pre>
+
+      <aside class="note">
+        <p>Each of the escape sequences recognised by Unicode MessageFormat
+          pass through resource parsing as complete and intact,
+          so that they do not need to be double-escaped.</p>
+      </aside>
+    </section>
+
+    <section id="escaped">
+      <h4>Escaped Characters</h4>
+      <p>Most escape sequences are shared between `id-escape` and `value-escape`.</p>
+
+      <p>The parsed value of an escaped newline (which MUST be followed by non-empty whitespace) is an empty string.
+        This allows for line breaks to be inserted into an `id` or `value` for presentation only,
+        and for long keys and values to be wrapped for legibility.</p>
+
+      <p>The parsed value of an escaped <span class="codepoint"><bdi lang="zxx">&#x2409;</bdi><code class="uname">U+0009 CHARACTER TABULATION</code></span>
+        or <span class="codepoint"><bdi lang="zxx">&#x2420;</bdi><code class="uname">U+0020 SPACE</code></span> is the character itself.</p>
+      <p>The parsed value of an escaped `\n` is the
+        <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> character.</p>
+      <p>The parsed value of an escaped `\r` is the
+        <span class="codepoint"><bdi lang="zxx">&#x240D;</bdi><code class="uname">U+000D CARRIAGE RETURN</code></span> character.</p>
+      <p>The parsed value of an escaped `\t` is the
+        <span class="codepoint"><bdi lang="zxx">&#x2409;</bdi><code class="uname">U+0009 CHARACTER TABULATION</code></span> character</p>
+      <p>The parsed value of the `\x`, `\u`, and `\U` escapes
+        is the Unicode character represented by their hexadecimal values.</p>
+
+      <pre class="abnf">
+        escaped = backslash
+                / (newline ws)
+                / SP / HTAB
+                / %s"n" / %s"r" / %s"t" ; represent LF, CR, HTAB
+                / (%s"x" HEXDIG HEXDIG)
+                / (%s"u" HEXDIG HEXDIG HEXDIG HEXDIG)
+                / (%s"U" HEXDIG HEXDIG HEXDIG HEXDIG HEXDIG HEXDIG)
+        backslash = "\"
+      </pre>
+
+      <aside class="note">
+        <p>The syntax allows for the same character to be escaped with more than one representation.
+          For example, each of the these is a valid escaped form of
+          <span class="codepoint"><bdi lang="zxx">&#x2409;</bdi><code class="uname">U+0009 CHARACTER TABULATION</code></span>:
+          `\`<span class="codepoint"><bdi lang="zxx">&#x2409;</bdi></span>, `\t`, `\x09`, `\u0009`, `\U000009`.</p>
+      </aside>
+    </section>
+
+    <section id="whitespace">
+      <h4>Whitespace</h4>
+      <p>The only horizontal whitespace characters that are considered as such
+        are the <span class="codepoint"><bdi lang="zxx">&#x2409;</bdi><code class="uname">U+0009 CHARACTER TABULATION</code></span> and
+        <span class="codepoint"><bdi lang="zxx">&#x2420;</bdi><code class="uname">U+0020 SPACE</code></span> characters</p>
+
+      <p>Both <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> and
+        <span class="codepoint">
+          <span style="white-space: nowrap"><bdi lang="zxx">&#x240D;</bdi><bdi lang="zxx">&#x2424;</bdi></span>
+          <code class="uname">U+000D CARRIAGE RETURN</code> + <code class="uname">U+000A END OF LINE</code>
+        </span>
+        are accepted as line endings,
+        but all parsed values will normalize their representation as only
+        <span class="codepoint"><bdi lang="zxx">&#x2424;</bdi><code class="uname">U+000A END OF LINE</code></span> characters.
+        To include other vertical whitespace characters in a `value`,
+        they must be escaped.</p>
+
+      <pre class="abnf">
+        empty-line = [ws]
+        ws = 1*(SP / HTAB)
+        newline = CRLF / LF
+      </pre>
+    </section>
+
+    <section id="abnf">
+      <h4>ABNF</h4>
+      <p>The full syntax of a message resource is described by the following [[ABNF]],
+        also available as <a href="./resource.abnf">`resource.abnf`</a>:</p>
+
+      <pre class="abnf" data-include="resource.abnf" data-include-format="text"></pre>
+    </section>
+
+    <section id="data-model" class="informative">
+      <h4>Data Model</h4>
+      <p>The full data model of a message resource is described by the following TypeScript,
+        also available as <a href="./resource.d.ts">`resource.d.ts`</a>.</p>
+
+      <p>The Unicode MessageFormat message data model referenced here is available as
+        <a href="./message.d.ts">`message.d.ts`</a></p>
+
+      <pre class="typescript" data-include="resource.d.ts" data-include-format="text"></pre>
+    </section>
   </section>
 </body>
 </html>
