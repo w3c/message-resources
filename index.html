@@ -14,6 +14,29 @@
     async></script>
 
   <script class="remove">
+    async function loadTypescript() {
+      const worker = await document.respec.worker;
+      const action = "highlight-load-lang";
+      const propName = "defineTypeScript";
+      const lang = "typescript";
+      let langScript;
+      try {
+        const response = await fetch("./typescript.min.js");
+        if (response.ok) langScript = await response.text();
+      } catch {
+        return
+      }
+      worker.postMessage({ action, langScript, propName, lang });
+      return new Promise(resolve => {
+        worker.addEventListener("message", function listener({ data }) {
+          if (data.action === action && data.lang === lang) {
+            worker.removeEventListener("message", listener);
+            resolve();
+          }
+        });
+      });
+    }
+
     var respecConfig = {
       specStatus: "ED",
       editors: [
@@ -25,6 +48,7 @@
       group: "i18n",
       canonicalURI: "TR",
       license: "w3c-software-doc",
+      preProcess: [loadTypescript],
       localBiblio: {
         Fluent: {
           title: "Fluent Syntax (FTL)",
