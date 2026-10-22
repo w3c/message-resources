@@ -102,11 +102,6 @@
     <p>The syntax of a message resource document is defined by this section using [[ABNF]],
       along with a non-normative corresponding TypeScript data model.</p>
 
-    <p>The data model is not a CST, and so does not encode whitespace or empty lines.
-      Users are encouraged to not consider them significant,
-      and to always normalize the syntax representation of a message resource
-      when manipulating it programmatically.</p>
-
     <aside class="note">
       <p>The design of the message resource syntax is inspired by multiple other pre-existing syntaxes,
         and is intended to be understandable without prior experience.</p>
@@ -129,13 +124,28 @@
         resource = resource-head *(newline item)
       </pre>
 
-      <pre class="typescript">
-        interface Resource {
-          comment: string;
-          meta: Metadata[];
-          sections: Section[];
-        }
-      </pre>
+      <section id="resource-datamodel" class="informative">
+        <h5>Resource Data Model</h5>
+        <p>A `Resource` is the root of the data model representation of a message resource.
+          Its `Resource.comment` and `Resource.meta` values are set by [[[#resource-head|`resource-head`]]] contents,
+          while `Resource.sections` represents the remaining contents of the message resource.</p>
+
+        <pre class="typescript">
+          interface Resource {
+            comment: string;
+            meta: Metadata[];
+            sections: Section[];
+          }
+        </pre>
+
+        <p class="advisement">
+          The data model is not a concrete syntax tree,
+          and so does not encode whitespace or empty lines.
+          Users are encouraged to consider them not significant,
+          and to always normalize the syntax representation of a message resource
+          when manipulating it programmatically.
+        </p>
+      </section>
     </section>
 
     <section id="resource-head">
@@ -178,17 +188,20 @@
         comment = "#" *(content / backslash)
       </pre>
 
-      <p>In the data model, attached comments are presented as
-        `Resource.comment`, `Section.comment`, and `Entry.comment` string values.
-        Standalone comments are presented as `Comment` values.
-        An empty or whitespace-only comment will be represented by an empty string.</p>
+      <section id="comment-datamodel" class="informative">
+        <h5>Comment Data Model</h5>
+        <p>In the data model, attached comments are presented as
+          `Resource.comment`, `Section.comment`, and `Entry.comment` string values.
+          Standalone comments are presented as `Comment` values.
+          An empty or whitespace-only comment will be represented by an empty string.</p>
 
-      <pre class="typescript">
-        interface Comment {
-          type: "comment";
-          comment: string;
-        }
-      </pre>
+        <pre class="typescript">
+          interface Comment {
+            type: "comment";
+            comment: string;
+          }
+        </pre>
+      </section>
     </section>
 
     <section id="metadata">
@@ -204,12 +217,19 @@
         metadata = "@" id-part [ws value]
       </pre>
 
-      <pre class="typescript">
-        interface Metadata {
-          key: string;
-          value: string;
-        }
-      </pre>
+      <section id="metadata-datamodel" class="informative">
+        <h5>Metadata Data Model</h5>
+        <p>The data model representation of metadata is as an array of `Metadata` values.
+          This allows for their relative order to be retained,
+          and for the same `Metadata.key` value to be repeated.</p>
+
+        <pre class="typescript">
+          interface Metadata {
+            key: string;
+            value: string;
+          }
+        </pre>
+      </section>
     </section>
 
     <section id="item">
@@ -241,25 +261,34 @@
                        "[" [ws] id [ws] "]" [ws]
       </pre>
 
-      <p>In the data model, the normalized identifier is stored as the `Section.id` array of strings.
-        The top-level or anonymous section has an empty `Section.id` array.</p>
+      <section id="section-datamodel" class="informative">
+        <h5>Section Data Model</h5>
+        <p>The `section-head` and the [[[#entry|`entry`]]] and standalone [[[#comment|`comment`]]] values
+          that follow before the next `section-head`
+          are collected into the `Section` data model.</p>
 
-      <pre class="typescript">
-        interface Section {
-          comment: string;
-          meta: Metadata[];
-          id: string[];
-          entries: (Entry | Comment)[];
-        }
-      </pre>
+        <p>The normalized `section-head` identifier is stored as the `Section.id` array of strings.
+          The top-level or anonymous section has an empty `Section.id` array.</p>
 
-      <aside class="note">
-        <p>The message resource syntax requires the `id` array to be non-empty
-          for all sections after the first one,
-          but empty identifier arrays are also otherwise possible
-          when this data model is used to represent other message resource formats,
-          such as [[Fluent]] FTL files.</p>
-      </aside>
+        <p>The `Section.comment` value is set from `comment` lines that immediately precede the `section-head`.</p>
+
+        <pre class="typescript">
+          interface Section {
+            comment: string;
+            meta: Metadata[];
+            id: string[];
+            entries: (Entry | Comment)[];
+          }
+        </pre>
+
+        <aside class="note">
+          <p>The message resource syntax requires the `id` array to be non-empty
+            for all sections after the first one,
+            but empty identifier arrays are also otherwise possible
+            when this data model is used to represent other message resource formats,
+            such as [[Fluent]] FTL files.</p>
+        </aside>
+      </section>
     </section>
 
     <section id="entry">
@@ -281,20 +310,25 @@
                 id [ws] "=" [ws] value
       </pre>
 
-      <p>In the data model, the `Entry.id` value is a non-empty list of non-empty strings
-        parsed from the `id` of the `entry`, but not including its section identifier.
-        To determine the normalized identifier of an `Entry`,
-        append `Entry.id` to its parent's `Section.id`.</p>
+      <section id="entry-datamodel" class="informative">
+        <h5>Entry Data Model</h5>
+        <p>In the data model, the `Entry.id` value is a non-empty list of non-empty strings
+          parsed from the `id` of the `entry`, but not including its section identifier.
+          To determine the normalized identifier of an `Entry`,
+          append `Entry.id` to its parent's `Section.id`.</p>
 
-      <pre class="typescript">
-        interface Entry {
-          type: "entry";
-          comment: string;
-          meta: Metadata[];
-          id: string[];
-          value: Message;
-        }
-      </pre>
+        <p>The `Entry.comment` value is set from `comment` lines that immediately precede the `entry`.</p>
+
+        <pre class="typescript">
+          interface Entry {
+            type: "entry";
+            comment: string;
+            meta: Metadata[];
+            id: string[];
+            value: Message;
+          }
+        </pre>
+      </section>
     </section>
 
     <section id="identifier">
@@ -418,7 +452,7 @@
       <pre class="abnf" data-include="resource.abnf" data-include-format="text"></pre>
     </section>
 
-    <section id="data-model">
+    <section id="data-model" class="informative">
       <h4>Data Model</h4>
       <p>The full data model of a message resource is described by the following TypeScript,
         also available as <a href="./resource.d.ts">`resource.d.ts`</a>.</p>
