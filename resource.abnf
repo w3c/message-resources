@@ -3,6 +3,10 @@ resource-head = *((comment / empty-line) newline)
                 1*(metadata newline)
                 "---" [ws]
 
+comment = "#" *(content / backslash)
+
+metadata = "@" id-part [ws value]
+
 item = section-head / entry / comment / empty-line
 
 section-head = *(metadata newline)
@@ -10,13 +14,6 @@ section-head = *(metadata newline)
 
 entry = *(metadata newline)
         id [ws] "=" [ws] value
-
-metadata = "@" id-part [ws value]
-comment = "#" *(content / backslash)
-empty-line = [ws]
-
-ws = 1*(SP / HTAB)
-newline = CRLF / LF
 
 id = id-part *([ws] "." [ws] id-part)
 id-part = 1*(id-char / id-escape)
@@ -46,3 +43,7 @@ escaped = backslash
         / (%s"u" HEXDIG HEXDIG HEXDIG HEXDIG)
         / (%s"U" HEXDIG HEXDIG HEXDIG HEXDIG HEXDIG HEXDIG)
 backslash = "\"
+
+empty-line = [ws]
+ws = 1*(SP / HTAB)
+newline = CRLF / LF
